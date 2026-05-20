@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { getService, generateTimeSlots } from "@/lib/bookingServices";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
   }
 
   const allSlots = generateTimeSlots(service.durationMin);
+  const supabase = getSupabase();
 
   const { data: existingBookings, error } = await supabase
     .from("bookings")

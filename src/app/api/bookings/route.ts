@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { getService } from "@/lib/bookingServices";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Service not found" }, { status: 404 });
   }
 
-  // Check capacity before inserting
+  const supabase = getSupabase();
+
   const { count, error: countError } = await supabase
     .from("bookings")
     .select("*", { count: "exact", head: true })
