@@ -72,13 +72,13 @@ export default function MembershipCTA() {
             Membresías
           </p>
           <h2 className="font-serif text-[clamp(2.2rem,5vw,3.8rem)] text-juva-cream leading-tight mb-5">
-            Acceso Exclusivo
+            Únete a JUVA
           </h2>
           <div className="w-12 h-px bg-juva-bronze mx-auto mb-6" />
           <p className="text-juva-muted text-sm md:text-base leading-relaxed max-w-md mx-auto">
-            JUVA está preparando una comunidad limitada de miembros que buscan
-            un enfoque diferente hacia el bienestar, la recuperación y el
-            rendimiento.
+            JUVA abre sus puertas a todos los que buscan un enfoque diferente
+            hacia el bienestar, la recuperación y el rendimiento. Regístrate y
+            te contactamos pronto.
           </p>
         </motion.div>
 
