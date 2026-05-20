@@ -1,402 +1,530 @@
 "use client";
 
-/* ─────────────────────────────────────────────────────────────────────────
-   ReservationSection — HIDDEN UNTIL LAUNCH
-   ─────────────────────────────────────────────────────────────────────────
-   This component is NOT rendered yet. It is imported but commented out
-   in src/app/page.tsx.
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { SERVICES } from "@/lib/bookingServices";
 
-   When you are ready to launch bookings:
-   1. Uncomment the import and <ReservationSection /> in page.tsx
-   2. Connect a backend (see Backend section below)
-   3. Replace AVAILABLE_SLOTS with real availability from your API
-   4. Replace the handleSubmit mock with a real API call
+type Slot = {
+  time: string;
+  available: boolean;
+  remaining: number;
+};
 
-   BACKEND OPTIONS (recommended):
-   ─ Supabase (free tier) — create a "reservations" table, use their JS SDK
-   ─ Cal.com (open source, self-hostable) — no per-booking fees
-   ─ Calendly API — easiest integration, but has per-seat costs
-   ─────────────────────────────────────────────────────────────────────────
-*/
+type Step = 1 | 2 | 3;
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { technologies } from "@/lib/data";
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+  exit: { opacity: 0, y: -16, transition: { duration: 0.3 } },
+};
 
-/* ─── Mock availability data — replace with real API call ─────────────────
-   Structure: { date: string (ISO), slots: string[] }
-   Fetch this from your backend based on the selected service.          */
-const MOCK_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
-
-/* Days to show in the date picker — generate from today + 14 days */
-function getNext14Days(): { label: string; value: string }[] {
-  const days: { label: string; value: string }[] = [];
-  const today = new Date();
-  for (let i = 1; i <= 14; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    const label = d.toLocaleDateString("es-EC", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-    days.push({ label, value: d.toISOString().split("T")[0] });
-  }
-  return days;
+function todayISO() {
+  return new Date().toISOString().split("T")[0];
 }
 
-interface ReservationForm {
-  name: string;
-  email: string;
-  phone: string;
-  service: string;
-  date: string;
-  slot: string;
-  notes: string;
+function formatDisplayDate(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("es-EC", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 export default function ReservationSection() {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [form, setForm] = useState<ReservationForm>({
-    name: "",
-    email: "",
-    phone: "",
-    service: "",
-    date: "",
-    slot: "",
-    notes: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
+  const [step, setStep] = useState<Step>(1);
 
-  const days = getNext14Days();
+  // Step 1
+  const [serviceId, setServiceId] = useState(SERVICES[0].id);
+  const [date, setDate] = useState(todayISO());
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  // Step 2
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
 
-  const selectDate = (value: string) =>
-    setForm((prev) => ({ ...prev, date: value, slot: "" }));
+  // Step 3
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const selectSlot = (slot: string) =>
-    setForm((prev) => ({ ...prev, slot }));
+  const selectedService = SERVICES.find((s) => s.id === serviceId)!;
 
-  /* Replace this mock with a real fetch to your API or Supabase insert */
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setConfirmed(true);
-    }, 1200);
-  };
+  const fetchSlots = useCallback(async () => {
+    setSlotsLoading(true);
+    setSelectedTime(null);
+    try {
+      const res = await fetch(
+        `/api/availability?serviceId=${serviceId}&date=${date}`
+      );
+      const data = await res.json();
+      setSlots(data.slots ?? []);
+    } catch {
+      setSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  }, [serviceId, date]);
 
-  /* text-base (16px) on all inputs — prevents iOS auto-zoom */
+  useEffect(() => {
+    fetchSlots();
+  }, [fetchSlots]);
+
+  async function handleConfirm() {
+    if (!selectedTime) return;
+    setSubmitting(true);
+    setErrorMsg(null);
+
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceId,
+          date,
+          startTime: selectedTime,
+          name,
+          email,
+          phone,
+          notes,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.error ?? "Ocurrió un error. Intenta de nuevo.");
+      } else {
+        setSuccess(true);
+      }
+    } catch {
+      setErrorMsg("Error de conexión. Intenta de nuevo.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function reset() {
+    setStep(1);
+    setServiceId(SERVICES[0].id);
+    setDate(todayISO());
+    setSelectedTime(null);
+    setName("");
+    setEmail("");
+    setPhone("");
+    setNotes("");
+    setSuccess(false);
+    setErrorMsg(null);
+  }
+
   const inputClass =
-    "w-full bg-juva-bg-elevated border border-juva-bronze/15 text-juva-cream text-base tracking-wide px-4 py-3.5 outline-none focus:border-juva-bronze/50 transition-colors duration-200 placeholder:text-juva-muted/40 rounded-none";
+    "w-full bg-juva-bg-elevated border border-juva-cream/10 text-juva-cream placeholder-juva-muted/50 px-4 py-3 text-base focus:outline-none focus:border-juva-bronze/60 transition-colors";
 
   return (
     <section
       id="reservar"
       className="bg-juva-bg-base py-20 md:py-40 px-6 relative overflow-hidden"
     >
-      {/* Background glow */}
+      {/* Glow accent */}
       <div
         aria-hidden="true"
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] glow-radial opacity-40 pointer-events-none"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px bg-gradient-to-r from-transparent via-juva-bronze/30 to-transparent"
       />
 
-      <div className="max-w-2xl mx-auto relative">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-14">
           <p className="text-juva-bronze text-xs tracking-[0.35em] uppercase mb-4">
-            Reservas
+            Reservar
           </p>
-          <h2 className="font-serif text-[clamp(2.2rem,5vw,3.8rem)] text-juva-cream leading-tight mb-4">
-            Reservar Sesión
+          <h2 className="font-serif text-[clamp(2rem,4.5vw,3.2rem)] text-juva-cream leading-tight">
+            Elige tu sesión
           </h2>
-          <div className="w-12 h-px bg-juva-bronze mx-auto mb-5" />
-          <p className="text-juva-muted text-sm leading-relaxed max-w-sm mx-auto">
-            Selecciona el servicio, elige fecha y hora, y confirma tu reserva.
+          <p className="text-juva-muted text-sm mt-4 max-w-md mx-auto leading-relaxed">
+            Selecciona el servicio, la fecha y el horario. Te confirmaremos tu
+            reserva de inmediato.
           </p>
         </div>
 
-        {/* Step progress indicator */}
-        <div className="flex items-center justify-center gap-3 mb-10">
-          {([1, 2, 3] as const).map((s) => (
-            <div key={s} className="flex items-center gap-3">
-              <div
-                className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs transition-all duration-300 ${
-                  step >= s
-                    ? "border-juva-bronze bg-juva-bronze text-juva-bg-deep font-medium"
-                    : "border-juva-bronze/20 text-juva-muted"
-                }`}
-              >
-                {s}
-              </div>
-              {s < 3 && (
+        {/* Progress indicator */}
+        {!success && (
+          <div className="flex items-center justify-center gap-3 mb-12">
+            {([1, 2, 3] as Step[]).map((s) => (
+              <div key={s} className="flex items-center gap-3">
                 <div
-                  className={`w-8 h-px transition-colors duration-300 ${
-                    step > s ? "bg-juva-bronze/60" : "bg-juva-bronze/15"
+                  className={`w-6 h-6 flex items-center justify-center text-[10px] tracking-wider font-medium transition-colors duration-300 ${
+                    step === s
+                      ? "bg-juva-bronze text-juva-bg-deep"
+                      : step > s
+                      ? "bg-juva-bronze/30 text-juva-bronze"
+                      : "bg-juva-bg-elevated text-juva-muted/50"
                   }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+                >
+                  {step > s ? (
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    >
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  ) : (
+                    s
+                  )}
+                </div>
+                {s < 3 && (
+                  <div
+                    className={`w-12 h-px transition-colors duration-300 ${
+                      step > s ? "bg-juva-bronze/50" : "bg-juva-cream/10"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
-          {/* ─── Step 1: Select service + date + time ─── */}
-          {step === 1 && !confirmed && (
+          {/* ── STEP 1: Service + Date + Time ── */}
+          {!success && step === 1 && (
             <motion.div
               key="step1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.35 }}
-              className="flex flex-col gap-5"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="space-y-8"
             >
               {/* Service selector */}
               <div>
-                <p className="text-juva-bronze/70 text-xs tracking-[0.2em] uppercase mb-3">
+                <label className="block text-juva-bronze/80 text-xs tracking-[0.2em] uppercase mb-3">
                   Servicio
-                </p>
-                <div className="relative">
-                  <select
-                    name="service"
-                    value={form.service}
-                    onChange={handleChange}
-                    className={`${inputClass} appearance-none cursor-pointer ${
-                      form.service === "" ? "text-juva-muted/40" : ""
-                    }`}
-                  >
-                    <option value="" disabled className="bg-juva-bg-elevated text-juva-muted">
-                      Selecciona un servicio
+                </label>
+                <select
+                  value={serviceId}
+                  onChange={(e) => setServiceId(e.target.value)}
+                  className={inputClass + " appearance-none cursor-pointer"}
+                >
+                  {SERVICES.map((s) => (
+                    <option
+                      key={s.id}
+                      value={s.id}
+                      className="bg-juva-bg-elevated"
+                    >
+                      {s.name} — {s.durationMin} min
                     </option>
-                    {technologies.map((t) => (
-                      <option key={t.id} value={t.id} className="bg-juva-bg-elevated text-juva-cream">
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-juva-bronze/50">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </div>
-                </div>
+                  ))}
+                </select>
+                <p className="text-juva-muted/60 text-xs mt-2">
+                  {selectedService.description}
+                </p>
               </div>
 
               {/* Date picker */}
               <div>
-                <p className="text-juva-bronze/70 text-xs tracking-[0.2em] uppercase mb-3">
+                <label className="block text-juva-bronze/80 text-xs tracking-[0.2em] uppercase mb-3">
                   Fecha
-                </p>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {days.slice(0, 8).map((day) => (
-                    <button
-                      key={day.value}
-                      type="button"
-                      onClick={() => selectDate(day.value)}
-                      className={`py-3 px-2 text-center text-xs border transition-all duration-200 ${
-                        form.date === day.value
-                          ? "border-juva-bronze bg-juva-bronze/10 text-juva-cream"
-                          : "border-juva-bronze/15 text-juva-muted hover:border-juva-bronze/40 hover:text-juva-cream"
-                      }`}
-                    >
-                      {day.label}
-                    </button>
-                  ))}
-                </div>
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  min={todayISO()}
+                  onChange={(e) => setDate(e.target.value)}
+                  className={inputClass + " cursor-pointer"}
+                />
               </div>
 
-              {/* Time slot picker */}
-              {form.date && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <p className="text-juva-bronze/70 text-xs tracking-[0.2em] uppercase mb-3">
-                    Horario
+              {/* Time slots */}
+              <div>
+                <label className="block text-juva-bronze/80 text-xs tracking-[0.2em] uppercase mb-3">
+                  Horario disponible
+                </label>
+
+                {slotsLoading ? (
+                  <div className="flex items-center gap-3 py-8 text-juva-muted/50 text-sm">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                      className="w-4 h-4 border border-juva-bronze/40 border-t-juva-bronze rounded-full"
+                    />
+                    Cargando horarios…
+                  </div>
+                ) : slots.length === 0 ? (
+                  <p className="text-juva-muted/50 text-sm py-4">
+                    No hay horarios disponibles para esta fecha.
                   </p>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {MOCK_SLOTS.map((slot) => (
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                    {slots.map((slot) => (
                       <button
-                        key={slot}
-                        type="button"
-                        onClick={() => selectSlot(slot)}
-                        className={`py-3 text-xs border transition-all duration-200 ${
-                          form.slot === slot
-                            ? "border-juva-bronze bg-juva-bronze/10 text-juva-cream"
-                            : "border-juva-bronze/15 text-juva-muted hover:border-juva-bronze/40 hover:text-juva-cream"
+                        key={slot.time}
+                        disabled={!slot.available}
+                        onClick={() => setSelectedTime(slot.time)}
+                        className={`py-3 text-sm text-center transition-all duration-200 ${
+                          !slot.available
+                            ? "opacity-25 cursor-not-allowed bg-juva-bg-elevated text-juva-muted"
+                            : selectedTime === slot.time
+                            ? "bg-juva-bronze text-juva-bg-deep font-medium"
+                            : "bg-juva-bg-elevated text-juva-cream border border-juva-cream/10 hover:border-juva-bronze/50 hover:text-juva-bronze"
                         }`}
                       >
-                        {slot}
+                        {slot.time}
                       </button>
                     ))}
                   </div>
-                </motion.div>
-              )}
+                )}
+              </div>
 
               <motion.button
-                type="button"
-                disabled={!form.service || !form.date || !form.slot}
                 onClick={() => setStep(2)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="mt-2 w-full bg-juva-bronze text-juva-bg-deep py-4 text-sm tracking-[0.18em] uppercase font-medium hover:bg-juva-wood-light transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={!selectedTime}
+                whileHover={selectedTime ? { scale: 1.02 } : {}}
+                whileTap={selectedTime ? { scale: 0.98 } : {}}
+                className="w-full py-4 bg-juva-bronze text-juva-bg-deep text-sm tracking-[0.15em] uppercase font-medium transition-all duration-300 hover:bg-juva-wood-light disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Continuar
               </motion.button>
             </motion.div>
           )}
 
-          {/* ─── Step 2: Personal info ─── */}
-          {step === 2 && !confirmed && (
-            <motion.form
+          {/* ── STEP 2: Personal info ── */}
+          {!success && step === 2 && (
+            <motion.div
               key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.35 }}
-              onSubmit={(e) => { e.preventDefault(); setStep(3); }}
-              className="flex flex-col gap-4"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="space-y-6"
             >
-              <input
-                type="text"
-                name="name"
-                required
-                placeholder="Nombre completo"
-                value={form.name}
-                onChange={handleChange}
-                className={inputClass}
-                autoComplete="name"
-              />
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="Correo electrónico"
-                value={form.email}
-                onChange={handleChange}
-                className={inputClass}
-                autoComplete="email"
-              />
-              <input
-                type="tel"
-                name="phone"
-                required
-                placeholder="Teléfono / WhatsApp"
-                value={form.phone}
-                onChange={handleChange}
-                className={inputClass}
-                autoComplete="tel"
-                inputMode="tel"
-              />
-              <textarea
-                name="notes"
-                placeholder="Notas adicionales (opcional)"
-                value={form.notes}
-                onChange={handleChange}
-                rows={3}
-                className={`${inputClass} resize-none`}
-              />
+              <div className="bg-juva-bg-elevated border border-juva-cream/10 px-5 py-4 text-sm text-juva-muted">
+                <span className="text-juva-bronze font-medium">
+                  {selectedService.name}
+                </span>
+                {" — "}
+                {formatDisplayDate(date)} a las{" "}
+                <span className="text-juva-cream">{selectedTime}</span>
+              </div>
 
-              <div className="flex gap-3 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-juva-bronze/80 text-xs tracking-[0.2em] uppercase mb-2">
+                    Nombre completo *
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Tu nombre"
+                    autoComplete="name"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-juva-bronze/80 text-xs tracking-[0.2em] uppercase mb-2">
+                    Correo electrónico *
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@correo.com"
+                    autoComplete="email"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-juva-bronze/80 text-xs tracking-[0.2em] uppercase mb-2">
+                    Teléfono
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+593 99 000 0000"
+                    autoComplete="tel"
+                    inputMode="tel"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-juva-bronze/80 text-xs tracking-[0.2em] uppercase mb-2">
+                    Notas adicionales
+                  </label>
+                  <input
+                    type="text"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Condiciones, preferencias…"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-2">
                 <button
-                  type="button"
                   onClick={() => setStep(1)}
-                  className="flex-1 py-4 border border-juva-bronze/20 text-juva-muted text-sm tracking-wider hover:border-juva-bronze/40 hover:text-juva-cream transition-all duration-300"
+                  className="flex-1 py-4 border border-juva-cream/20 text-juva-muted text-sm tracking-[0.15em] uppercase hover:border-juva-bronze/40 hover:text-juva-cream transition-all duration-300"
                 >
                   Atrás
                 </button>
                 <motion.button
-                  type="submit"
-                  disabled={!form.name || !form.email || !form.phone}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-[2] bg-juva-bronze text-juva-bg-deep py-4 text-sm tracking-[0.18em] uppercase font-medium hover:bg-juva-wood-light transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                  onClick={() => setStep(3)}
+                  disabled={!name.trim() || !email.trim()}
+                  whileHover={name && email ? { scale: 1.02 } : {}}
+                  whileTap={name && email ? { scale: 0.98 } : {}}
+                  className="flex-[2] py-4 bg-juva-bronze text-juva-bg-deep text-sm tracking-[0.15em] uppercase font-medium transition-all duration-300 hover:bg-juva-wood-light disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Revisar
-                </motion.button>
-              </div>
-            </motion.form>
-          )}
-
-          {/* ─── Step 3: Confirmation summary ─── */}
-          {step === 3 && !confirmed && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.35 }}
-            >
-              {/* Summary card */}
-              <div className="glass-card p-6 mb-6 space-y-4">
-                <p className="text-juva-bronze/70 text-xs tracking-[0.25em] uppercase mb-4">
-                  Resumen de reserva
-                </p>
-                {[
-                  { label: "Servicio", value: technologies.find(t => t.id === form.service)?.name || "" },
-                  { label: "Fecha", value: form.date },
-                  { label: "Hora", value: form.slot },
-                  { label: "Nombre", value: form.name },
-                  { label: "Correo", value: form.email },
-                  { label: "Teléfono", value: form.phone },
-                ].map((row) => (
-                  <div key={row.label} className="flex justify-between gap-4 text-sm">
-                    <span className="text-juva-muted">{row.label}</span>
-                    <span className="text-juva-cream text-right">{row.value}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="flex-1 py-4 border border-juva-bronze/20 text-juva-muted text-sm tracking-wider hover:border-juva-bronze/40 hover:text-juva-cream transition-all duration-300"
-                >
-                  Editar
-                </button>
-                <motion.button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-[2] bg-juva-bronze text-juva-bg-deep py-4 text-sm tracking-[0.18em] uppercase font-medium hover:bg-juva-wood-light transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Confirmando..." : "Confirmar Reserva"}
+                  Revisar reserva
                 </motion.button>
               </div>
             </motion.div>
           )}
 
-          {/* ─── Success state ─── */}
-          {confirmed && (
+          {/* ── STEP 3: Confirm ── */}
+          {!success && step === 3 && (
+            <motion.div
+              key="step3"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="space-y-6"
+            >
+              <div className="border border-juva-bronze/20 divide-y divide-juva-cream/[0.08]">
+                {[
+                  { label: "Servicio", value: selectedService.name },
+                  {
+                    label: "Duración",
+                    value: `${selectedService.durationMin} minutos`,
+                  },
+                  { label: "Fecha", value: formatDisplayDate(date) },
+                  { label: "Hora", value: selectedTime ?? "" },
+                  { label: "Nombre", value: name },
+                  { label: "Correo", value: email },
+                  ...(phone ? [{ label: "Teléfono", value: phone }] : []),
+                  ...(notes ? [{ label: "Notas", value: notes }] : []),
+                ].map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex justify-between px-5 py-3 text-sm"
+                  >
+                    <span className="text-juva-muted/70">{row.label}</span>
+                    <span className="text-juva-cream text-right max-w-[60%]">
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {errorMsg && (
+                <p className="text-red-400/80 text-sm text-center">
+                  {errorMsg}
+                </p>
+              )}
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setStep(2)}
+                  disabled={submitting}
+                  className="flex-1 py-4 border border-juva-cream/20 text-juva-muted text-sm tracking-[0.15em] uppercase hover:border-juva-bronze/40 hover:text-juva-cream transition-all duration-300 disabled:opacity-40"
+                >
+                  Atrás
+                </button>
+                <motion.button
+                  onClick={handleConfirm}
+                  disabled={submitting}
+                  whileHover={!submitting ? { scale: 1.02 } : {}}
+                  whileTap={!submitting ? { scale: 0.98 } : {}}
+                  className="flex-[2] py-4 bg-juva-bronze text-juva-bg-deep text-sm tracking-[0.15em] uppercase font-medium transition-all duration-300 hover:bg-juva-wood-light disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                >
+                  {submitting ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="w-4 h-4 border-2 border-juva-bg-deep/30 border-t-juva-bg-deep rounded-full"
+                      />
+                      Confirmando…
+                    </>
+                  ) : (
+                    "Confirmar reserva"
+                  )}
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── SUCCESS ── */}
+          {success && (
             <motion.div
               key="success"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center py-16 glass-card px-8"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              className="text-center py-12 space-y-6"
             >
-              <div className="w-12 h-12 rounded-full border border-juva-bronze/40 flex items-center justify-center mx-auto mb-6">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B58A5A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 18,
+                  delay: 0.1,
+                }}
+                className="w-16 h-16 mx-auto bg-juva-bronze/15 border border-juva-bronze/30 flex items-center justify-center"
+              >
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="text-juva-bronze"
+                >
+                  <path d="M20 6L9 17l-5-5" />
                 </svg>
+              </motion.div>
+
+              <div>
+                <h3 className="font-serif text-2xl text-juva-cream mb-2">
+                  Reserva confirmada
+                </h3>
+                <p className="text-juva-muted text-sm leading-relaxed max-w-sm mx-auto">
+                  Tu sesión de{" "}
+                  <span className="text-juva-bronze">{selectedService.name}</span>{" "}
+                  el {formatDisplayDate(date)} a las{" "}
+                  <span className="text-juva-cream">{selectedTime}</span> está
+                  reservada. Te esperamos en JUVA.
+                </p>
               </div>
-              <h3 className="font-serif text-2xl text-juva-cream mb-3">
-                Reserva confirmada.
-              </h3>
-              <p className="text-juva-muted text-sm leading-relaxed max-w-xs mx-auto">
-                Recibirás un correo de confirmación. El equipo de JUVA te contactará para coordinar los detalles.
-              </p>
+
+              <motion.button
+                onClick={reset}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-flex items-center gap-2 px-8 py-3 border border-juva-cream/20 text-juva-muted text-sm tracking-[0.15em] uppercase hover:border-juva-bronze/50 hover:text-juva-cream transition-all duration-300"
+              >
+                Nueva reserva
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
