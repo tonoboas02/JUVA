@@ -31,7 +31,7 @@ export default function Footer() {
               Bienestar. Fuerza. Longevidad.
             </p>
             <p className="text-juva-muted/60 text-xs tracking-wider mt-4">
-              Quito, Ecuador
+              Guayaquil, Ecuador
             </p>
           </div>
 

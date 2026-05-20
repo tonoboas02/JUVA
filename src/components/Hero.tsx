@@ -88,7 +88,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
           className="text-juva-bronze text-xs tracking-[0.35em] uppercase mb-8"
         >
-          Quito, Ecuador
+          Guayaquil, Ecuador
         </motion.p>
 
         {/* Wordmark */}
