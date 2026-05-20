@@ -8,6 +8,7 @@ const navLinks = [
   { label: "Experiencia", href: "#experience" },
   { label: "Tecnologías", href: "#technologies" },
   { label: "Santuario", href: "#sanctuary" },
+  { label: "Reservar", href: "#reservar" },
 ];
 
 export default function Navbar() {

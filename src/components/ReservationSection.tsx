@@ -19,7 +19,11 @@ const fadeUp: Variants = {
 };
 
 function todayISO() {
-  return new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function formatDisplayDate(iso: string) {
@@ -40,6 +44,7 @@ export default function ReservationSection() {
   const [date, setDate] = useState(todayISO());
   const [slots, setSlots] = useState<Slot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotsError, setSlotsError] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Step 2
@@ -57,14 +62,21 @@ export default function ReservationSection() {
 
   const fetchSlots = useCallback(async () => {
     setSlotsLoading(true);
+    setSlotsError(null);
     setSelectedTime(null);
     try {
       const res = await fetch(
         `/api/availability?serviceId=${serviceId}&date=${date}`
       );
       const data = await res.json();
-      setSlots(data.slots ?? []);
+      if (!res.ok) {
+        setSlotsError(data.error ?? "Error cargando horarios.");
+        setSlots([]);
+      } else {
+        setSlots(data.slots ?? []);
+      }
     } catch {
+      setSlotsError("No se pudo conectar con el servidor.");
       setSlots([]);
     } finally {
       setSlotsLoading(false);
@@ -120,6 +132,7 @@ export default function ReservationSection() {
     setNotes("");
     setSuccess(false);
     setErrorMsg(null);
+    setSlotsError(null);
   }
 
   const inputClass =
@@ -261,6 +274,8 @@ export default function ReservationSection() {
                     />
                     Cargando horarios…
                   </div>
+                ) : slotsError ? (
+                  <p className="text-red-400/70 text-sm py-4">{slotsError}</p>
                 ) : slots.length === 0 ? (
                   <p className="text-juva-muted/50 text-sm py-4">
                     No hay horarios disponibles para esta fecha.
