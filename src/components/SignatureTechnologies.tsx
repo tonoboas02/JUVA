@@ -28,7 +28,7 @@ export default function SignatureTechnologies() {
     <section
       id="technologies"
       ref={ref}
-      className="bg-juva-bg-deep py-28 md:py-40 px-6 relative overflow-hidden"
+      className="bg-juva-bg-deep py-20 md:py-40 px-6 relative overflow-hidden"
     >
       {/* Background glow */}
       <div

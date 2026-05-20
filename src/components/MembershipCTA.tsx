@@ -44,14 +44,15 @@ export default function MembershipCTA() {
     }, 900);
   };
 
+  /* text-base (16px) is critical on iOS — anything below 16px triggers auto-zoom on input focus */
   const inputClass =
-    "w-full bg-juva-bg-elevated border border-juva-bronze/15 text-juva-cream text-sm tracking-wide px-4 py-3.5 outline-none focus:border-juva-bronze/50 transition-colors duration-200 placeholder:text-juva-muted/40 rounded-none";
+    "w-full bg-juva-bg-elevated border border-juva-bronze/15 text-juva-cream text-base tracking-wide px-4 py-3.5 outline-none focus:border-juva-bronze/50 transition-colors duration-200 placeholder:text-juva-muted/40 rounded-none";
 
   return (
     <section
       id="membership"
       ref={ref}
-      className="bg-juva-bg-deep py-28 md:py-40 px-6 relative overflow-hidden"
+      className="bg-juva-bg-deep py-20 md:py-40 px-6 relative overflow-hidden"
     >
       {/* Radial glow behind the form */}
       <div
@@ -123,6 +124,7 @@ export default function MembershipCTA() {
                 onChange={handleChange}
                 className={inputClass}
                 autoComplete="tel"
+                inputMode="tel"
               />
 
               <div className="relative">

@@ -12,7 +12,7 @@ export default function SanctuarySection() {
     <section
       id="sanctuary"
       ref={ref}
-      className="bg-juva-bg-base py-28 md:py-40 px-6 relative overflow-hidden"
+      className="bg-juva-bg-base py-20 md:py-40 px-6 relative overflow-hidden"
     >
       {/* Top separator line */}
       <div
@@ -49,8 +49,7 @@ export default function SanctuarySection() {
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.9, delay: 0.1, ease: "easeOut" }}
             whileHover={{ scale: 1.015 }}
-            className="relative overflow-hidden cursor-default group"
-            style={{ minHeight: "520px" }}
+            className="relative overflow-hidden cursor-default group min-h-[320px] md:min-h-[520px]"
           >
             {/* IMAGE PLACEHOLDER: Replace with real JUVA interior photo of the Recovery Lounge.
                 Ideal: dark wood furniture, amber lighting, hyperbaric chamber, IV lounge chairs.
@@ -113,8 +112,7 @@ export default function SanctuarySection() {
                   ease: "easeOut",
                 }}
                 whileHover={{ scale: 1.015 }}
-                className="relative overflow-hidden cursor-default group flex-1"
-                style={{ minHeight: "250px" }}
+                className="relative overflow-hidden cursor-default group flex-1 min-h-[220px] md:min-h-[250px]"
               >
                 {/* IMAGE PLACEHOLDER: Replace with real JUVA interior photo.
                     space.placeholderKey tells you which space this is.

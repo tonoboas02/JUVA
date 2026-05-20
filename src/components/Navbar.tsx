@@ -69,7 +69,7 @@ export default function Navbar() {
 
             {/* Hamburger */}
             <button
-              className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5"
+              className="md:hidden flex flex-col justify-center items-center w-11 h-11 gap-1.5 -mr-1.5"
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             >

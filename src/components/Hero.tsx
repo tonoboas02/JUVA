@@ -136,13 +136,13 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.9, ease: "easeOut" }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4"
         >
           <motion.a
             href="#membership"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center px-8 py-4 bg-juva-bronze text-juva-bg-deep text-sm tracking-[0.15em] uppercase font-medium transition-all duration-300 hover:bg-juva-wood-light"
+            className="inline-flex items-center justify-center px-8 py-4 bg-juva-bronze text-juva-bg-deep text-sm tracking-[0.15em] uppercase font-medium transition-all duration-300 hover:bg-juva-wood-light"
           >
             Solicitar Acceso
           </motion.a>
@@ -151,7 +151,7 @@ export default function Hero() {
             href="#experience"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center gap-2 px-8 py-4 border border-juva-cream/20 text-juva-cream/70 text-sm tracking-[0.15em] uppercase hover:border-juva-bronze/50 hover:text-juva-cream transition-all duration-300"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-juva-cream/20 text-juva-cream/70 text-sm tracking-[0.15em] uppercase hover:border-juva-bronze/50 hover:text-juva-cream transition-all duration-300"
           >
             Ver la Experiencia
             <svg

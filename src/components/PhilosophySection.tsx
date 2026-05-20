@@ -28,7 +28,7 @@ export default function PhilosophySection() {
     <section
       id="philosophy"
       ref={ref}
-      className="bg-juva-bg-deep py-32 md:py-44 px-6 relative overflow-hidden"
+      className="bg-juva-bg-deep py-20 md:py-44 px-6 relative overflow-hidden"
     >
       {/* Subtle radial glow bottom-right */}
       <div

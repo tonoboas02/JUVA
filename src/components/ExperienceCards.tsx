@@ -96,7 +96,7 @@ export default function ExperienceCards() {
     <section
       id="experience"
       ref={ref}
-      className="bg-juva-bg-base py-28 md:py-40 px-6 relative overflow-hidden"
+      className="bg-juva-bg-base py-20 md:py-40 px-6 relative overflow-hidden"
     >
       {/* Top glow accent */}
       <div

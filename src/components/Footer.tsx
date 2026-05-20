@@ -21,7 +21,7 @@ export default function Footer() {
     <footer className="bg-juva-bg-deep border-t border-juva-bronze/20 pt-16 pb-10">
       <div className="max-w-6xl mx-auto px-6">
         {/* Main grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-12 md:mb-16">
           {/* Column 1: Brand */}
           <div>
             <p className="font-serif text-3xl tracking-widest text-juva-cream mb-2">
