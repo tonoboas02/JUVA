@@ -63,7 +63,18 @@ body::before {
   background: radial-gradient(ellipse at center, rgba(181, 138, 90, 0.12) 0%, transparent 70%);
 }
 
-/* Section entry animation used alongside Framer Motion */
+/* Offset anchor scroll so fixed navbar doesn't cover section headings */
+section[id] {
+  scroll-margin-top: 72px;
+}
+
+/* iOS Safari: prevent native date input text from clipping */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 48px;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
