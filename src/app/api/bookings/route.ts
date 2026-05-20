@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getService } from "@/lib/bookingServices";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   let body: {
     serviceId: string;
