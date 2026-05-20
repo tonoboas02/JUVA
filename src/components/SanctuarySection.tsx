@@ -1,8 +1,15 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { motion, useInView } from "framer-motion";
 import { sanctuarySpaces } from "@/lib/data";
+
+const sanctuaryImages = [
+  "/images/sauna.jpg",
+  "/images/strength-room.jpg",
+  "/images/infrared.jpg",
+];
 
 export default function SanctuarySection() {
   const ref = useRef<HTMLElement>(null);
@@ -51,14 +58,11 @@ export default function SanctuarySection() {
             whileHover={{ scale: 1.015 }}
             className="relative overflow-hidden cursor-default group min-h-[320px] md:min-h-[520px]"
           >
-            {/* IMAGE PLACEHOLDER: Replace with real JUVA interior photo of the Recovery Lounge.
-                Ideal: dark wood furniture, amber lighting, hyperbaric chamber, IV lounge chairs.
-                Set data-image-placeholder="sanctuary-recovery" to find this element. */}
-            <div
-              data-image-placeholder="sanctuary-recovery"
-              aria-hidden="true"
-              className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
-              style={{ background: sanctuarySpaces[0].gradient }}
+            <Image
+              src={sanctuaryImages[0]}
+              alt={sanctuarySpaces[0].title}
+              fill
+              className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
             />
 
             {/* Warm texture overlay */}
@@ -114,14 +118,11 @@ export default function SanctuarySection() {
                 whileHover={{ scale: 1.015 }}
                 className="relative overflow-hidden cursor-default group flex-1 min-h-[220px] md:min-h-[250px]"
               >
-                {/* IMAGE PLACEHOLDER: Replace with real JUVA interior photo.
-                    space.placeholderKey tells you which space this is.
-                    data-image-placeholder attribute below for easy lookup. */}
-                <div
-                  data-image-placeholder={space.placeholderKey}
-                  aria-hidden="true"
-                  className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
-                  style={{ background: space.gradient }}
+                <Image
+                  src={sanctuaryImages[i + 1]}
+                  alt={space.title}
+                  fill
+                  className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                 />
 
                 {/* Warm texture overlay */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 export default function Hero() {
@@ -27,31 +28,25 @@ export default function Hero() {
           Set data-image-placeholder="hero-bg" to find it easily.
       ─────────────────────────────────────────────────────────────────────── */}
       <motion.div
-        data-image-placeholder="hero-bg"
         aria-hidden="true"
         style={{ y: bgY }}
         className="absolute inset-0 -z-10"
       >
-        {/* Base dark gradient */}
+        {/* Hero photo */}
+        <Image
+          src="/images/hero.jpg"
+          alt=""
+          fill
+          priority
+          className="object-cover object-center"
+        />
+
+        {/* Dark overlay so text stays readable */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse at 30% 60%, #1D201E 0%, #0D0F0E 70%)",
-          }}
-        />
-
-        {/* Animated warm light sweep — replace with your hero image overlay later */}
-        <motion.div
-          className="absolute inset-0"
-          animate={{
-            backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-          }}
-          transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
-          style={{
-            backgroundSize: "200% 200%",
-            background:
-              "radial-gradient(ellipse at 20% 50%, rgba(138,98,64,0.18) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(181,138,90,0.08) 0%, transparent 40%)",
+              "linear-gradient(to bottom, rgba(13,15,14,0.55) 0%, rgba(13,15,14,0.4) 50%, rgba(13,15,14,0.7) 100%)",
           }}
         />
 
@@ -60,7 +55,7 @@ export default function Hero() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse at center, transparent 30%, rgba(13,15,14,0.6) 100%)",
+              "radial-gradient(ellipse at center, transparent 30%, rgba(13,15,14,0.5) 100%)",
           }}
         />
       </motion.div>
