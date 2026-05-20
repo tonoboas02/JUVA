@@ -1,25 +1,67 @@
+/* Google Fonts — Cormorant Garamond (serif headlines) + Inter (body) */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Inter:wght@300;400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── CSS Custom Properties ──────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg-deep: #0D0F0E;
+  --color-bg-base: #151716;
+  --color-bg-elevated: #1D201E;
+  --color-bronze: #B58A5A;
+  --color-wood: #8A6240;
+  --color-wood-light: #A8794C;
+  --color-cream: #EFE7D8;
+  --color-muted: #9A9A92;
+  --grain-opacity: 0.04;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base Reset ─────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg-deep);
+  color: var(--color-cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Grain / Noise Overlay ──────────────────────────────────────────────── */
+/* This creates a subtle film-grain texture over the entire page.
+   Adjust --grain-opacity in :root to change intensity (0 = off, 0.08 = heavy). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ─── Utility Classes ────────────────────────────────────────────────────── */
+
+/* Glassmorphism card surface */
+.glass-card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(29, 32, 30, 0.6);
+  border: 1px solid rgba(181, 138, 90, 0.15);
+}
+
+/* Bronze radial glow — use as an absolutely-positioned sibling */
+.glow-radial {
+  background: radial-gradient(ellipse at center, rgba(181, 138, 90, 0.12) 0%, transparent 70%);
+}
+
+/* Section entry animation used alongside Framer Motion */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
