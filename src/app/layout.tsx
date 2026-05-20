@@ -4,11 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "JUVA | Bienestar. Fuerza. Longevidad.",
   description:
-    "JUVA es un club privado de bienestar, rendimiento y longevidad en Guayaquil, Ecuador. Recuperación avanzada, entrenamiento de élite y terapias de bienestar en un solo espacio.",
+    "JUVA es un centro de bienestar, rendimiento y longevidad en Guayaquil, Ecuador. Recuperación avanzada, entrenamiento de élite y terapias de bienestar en un solo espacio.",
   openGraph: {
     title: "JUVA | Bienestar. Fuerza. Longevidad.",
     description:
-      "Club privado de bienestar y rendimiento en Guayaquil, Ecuador.",
+      "Centro de bienestar y rendimiento en Guayaquil, Ecuador.",
     locale: "es_EC",
     type: "website",
   },

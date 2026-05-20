@@ -126,9 +126,9 @@ export default function Hero() {
           transition={{ duration: 0.9, delay: 0.7, ease: "easeOut" }}
           className="text-juva-muted text-base md:text-lg max-w-xl mx-auto leading-relaxed mb-12 tracking-wide"
         >
-          Un club privado diseñado para la recuperación, el rendimiento y la
-          vitalidad integral. Cada detalle pensado para quienes exigen un
-          estándar diferente.
+          Un espacio diseñado para la recuperación, el rendimiento y la
+          vitalidad integral. Cada detalle pensado para quienes buscan
+          un estándar diferente.
         </motion.p>
 
         {/* CTA Buttons */}

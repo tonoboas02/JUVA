@@ -81,7 +81,7 @@ export default function PhilosophySection() {
               {[
                 {
                   title: "Recuperación Intencional",
-                  body: "JUVA reúne tecnología de recuperación avanzada y terapias de bienestar en un entorno privado. Cada sesión está diseñada para restaurar el cuerpo en profundidad.",
+                  body: "JUVA reúne tecnología de recuperación avanzada y terapias de bienestar en un entorno diseñado para eso. Cada sesión está pensada para restaurar el cuerpo en profundidad.",
                   delay: 0.4,
                 },
                 {
